@@ -1,0 +1,241 @@
+RewriteEngine On
+RewriteBase /bob/
+RewriteRule
+
+
+
+
+
+<h1>Enter new product</h1>
+    <form enctype="multipart/form-data" action="<?php echo $_PHP_SELF;?>" method="post">
+    <br>name of product :
+    <input type="text" name="name"><br>descraption :
+    <input type="text" name="desc"><br>Price :
+    <input type="number" name="price"><br>
+   Choose type  <select name="type">
+        <option value="t-s">T-shirt</option><option value="ut">utensil</option><option value="cup">Magic cup</option><option value="other">other</option></select>
+    Choose file:<input type="file" name="file"><br>
+    <input type="submit" name="submit"/>
+    </form>
+    <br><br>
+    <div class="msgs">
+    <table cellspacing="0">
+        <tbody>
+        <tr><th>id</th><th>name</th><th>email</th><th>phone</th><th>package</th><th>title</th><th id="max">msg</th><th>read/not 
+            </th></tr>
+        <?php
+        
+    
+        
+$con=mysqli_connect("localhost","root","rootroot","bob");
+	/*
+		Place code to connect to your DB here.
+	*/
+	// include your code to connect to DB.
+
+	$tbl_name="contact";		//your table name
+	// How many adjacent pages should be shown on each side?
+	$adjacents = 4;
+	
+	/* 
+	   First get total number of rows in data table. 
+	   If you have a WHERE clause in your query, make sure you mirror it here.
+	*/
+	$query = "SELECT COUNT(*) as num FROM $tbl_name";
+	$total_pages = mysqli_fetch_array(mysqli_query($con,$query));
+	$total_pages = $total_pages[num];
+	
+	/* Setup vars for query. */
+	$targetpage = "index.php"; 	//your file name  (the name of this file)
+	$limit = 10; 								//how many items to show per page
+	$page = $_GET['page'];
+	if($page) 
+		$start = ($page - 1) * $limit; 			//first item to display on this page
+	else
+		$start = 0;								//if no page var is given, set start to 0
+	
+	/* Get data. OREDER BY id DESC */
+	$sql = "SELECT * FROM $tbl_name  ORDER BY id DESC  LIMIT $start, $limit";
+	$result = mysqli_query($con,$sql);
+	
+	/* Setup page vars for display. */
+	if ($page == 0) $page = 1;					//if no page var is given, default to 1.
+	$prev = $page - 1;							//previous page is page - 1
+	$next = $page + 1;							//next page is page + 1
+	$lastpage = ceil($total_pages/$limit);		//lastpage is = total pages / items per page, rounded up.
+	$lpm1 = $lastpage - 1;						//last page minus 1
+	
+	/* 
+		Now we apply our rules and draw the pagination object. 
+		We're actually saving the code to a variable in case we want to draw it more than once.
+	*/
+	$pagination = "";
+	if($lastpage > 1)
+	{	
+		$pagination .= "<div class=\"pagination\">";
+		//previous button
+		if ($page > 1) 
+			$pagination.= "<a href=\"$targetpage?page=$prev\">� previous</a>";
+		else
+			$pagination.= "<span class=\"disabled\">� previous</span>";	
+		
+		//pages	
+		if ($lastpage < 7 + ($adjacents * 2))	//not enough pages to bother breaking it up
+		{	
+			for ($counter = 1; $counter <= $lastpage; $counter++)
+			{
+				if ($counter == $page)
+					$pagination.= "<span class=\"current\">$counter</span>";
+				else
+					$pagination.= "<a href=\"$targetpage?page=$counter\">$counter</a>";					
+			}
+		}
+		elseif($lastpage > 5 + ($adjacents * 2))	//enough pages to hide some
+		{
+			//close to beginning; only hide later pages
+			if($page < 1 + ($adjacents * 2))		
+			{
+				for ($counter = 1; $counter < 4 + ($adjacents * 2); $counter++)
+				{
+					if ($counter == $page)
+						$pagination.= "<span class=\"current\">$counter</span>";
+					else
+						$pagination.= "<a href=\"$targetpage?page=$counter\">$counter</a>";					
+				}
+				$pagination.= "...";
+				$pagination.= "<a href=\"$targetpage?page=$lpm1\">$lpm1</a>";
+				$pagination.= "<a href=\"$targetpage?page=$lastpage\">$lastpage</a>";		
+			}
+			//in middle; hide some front and some back
+			elseif($lastpage - ($adjacents * 2) > $page && $page > ($adjacents * 2))
+			{
+				$pagination.= "<a href=\"$targetpage?page=1\">1</a>";
+				$pagination.= "<a href=\"$targetpage?page=2\">2</a>";
+				$pagination.= "...";
+				for ($counter = $page - $adjacents; $counter <= $page + $adjacents; $counter++)
+				{
+					if ($counter == $page)
+						$pagination.= "<span class=\"current\">$counter</span>";
+					else
+						$pagination.= "<a href=\"$targetpage?page=$counter\">$counter</a>";					
+				}
+				$pagination.= "...";
+				$pagination.= "<a href=\"$targetpage?page=$lpm1\">$lpm1</a>";
+				$pagination.= "<a href=\"$targetpage?page=$lastpage\">$lastpage</a>";		
+			}
+			//close to end; only hide early pages
+			else
+			{
+				$pagination.= "<a href=\"$targetpage?page=1\">1</a>";
+				$pagination.= "<a href=\"$targetpage?page=2\">2</a>";
+				$pagination.= "...";
+				for ($counter = $lastpage - (2 + ($adjacents * 2)); $counter <= $lastpage; $counter++)
+				{
+					if ($counter == $page)
+						$pagination.= "<span class=\"current\">$counter</span>";
+					else
+						$pagination.= "<a href=\"$targetpage?page=$counter\">$counter</a>";					
+				}
+			}
+		}
+		
+		//next button
+		if ($page < $counter - 1) 
+			$pagination.= "<a href=\"$targetpage?page=$next\">next �</a>";
+		else
+			$pagination.= "<span class=\"disabled\">next �</span>";
+		$pagination.= "</div>\n";		
+	}
+        $dd="1";
+?>
+        
+<!--<img src="dmn/img.php?im_id=<?=$dd;?>">-->
+
+	<?php
+        
+while($row = mysqli_fetch_array($result,MYSQLI_ASSOC))
+		{
+		// Your while loop here
+	?>
+            <tr><td><a href='lookmsg.php?id_mg=<?php echo $row['id']; ?>'><?php echo $row['id'];?></a></td><td><?php echo $row['name'];?></td><td><?php echo $row['email']; ?></td><td><?php echo $row['phone'];?></td><td><?php echo $row['package'];?></td><td><?php echo $row['title']; ?></td><td id="max"><?php echo $row['msg']; ?></td><td><?php if ($row['last_parent']!='0') {echo "<img src='../vars/png/icon-check.png'>";}else{ echo "
+         <img src='../vars/png/images (16).png'/>";}?></td></tr> 
+        
+    <?php
+		}
+	?>
+
+                                  
+<?=$pagination?>
+            </tbody>
+        </table>
+<!--     <a href='lookmsg.php?id=".$row['id'].">View</a>-->
+    </div>
+    
+    <script>
+	function look(idd){window.location.href='lookmsg.php?id='.idd.''}
+</script>
+    
+    </body>
+
+
+</html>
+<?php
+/*
+
+function curli(){
+    $pathI=$_FILES['file']['tmp_name'];
+$url="http://localhost/bob/dmn/uploader.php";
+$remote=curl_init();
+curl_setopt($remote,CURLOPT_HEADER,0);
+curl_setopt($remote,CURLOPT_VERBOSE,0);
+curl_setopt($remote,CURLOPT_USERAGENT,$_SERVER['HTTP_USER_AGENT']);
+curl_setopt($remote,CURLOPT_RETURNTRANSFER,true);
+curl_setopt($remote,CURLOPT_URL,$url);
+curl_setopt($remote,CURLOPT_POST,true);
+    $post=array("file"=>"@".$pathI,
+    "submit"=>"submit"
+           );
+
+
+curl_setopt($remote,CURLOPT_POSTFIELDS,$post);
+
+$output=curl_exec($remote);
+echo $output;
+}
+*/
+/*
+function inst($contt,$name,$type,$price,$desc){
+    $con=mysqli_connect("localhost","root","rootroot","bob");
+    $q=mysqli_query($con,"insert into gallery(img,name,type,price,desc) values('$contt','$name','$type','$price','$desc') ");
+    mysqli_close($con);
+}
+*/
+    
+$img_type=$_FILES['file']['type'];
+$path=$_FILES['file']['tmp_name'];
+$name=$_POST['name'];
+$price=$_POST['price'];
+$type=$_POST['type'];
+$desc=$_POST['desc'];
+    //////
+    
+if($_POST['submit']){
+    //////
+$conect=mysqli_connect("localhost","root","rootroot","bob");
+  
+$content=file_get_contents($path);
+$contt=mysqli_real_escape_string($conect,$content);
+
+        $sqli="INSERT INTO gallery(img,img_type,name,price,descr,type) VALUES ('$contt','$img_type','$name','$price','$desc','$type')";
+//     $sqli="INSERT INTO gallery(name,price,desc,type) VALUES ('$name','$price','$desc','$type')";
+        $query=mysqli_query($conect,$sqli);
+    
+//        mysqli_close($conect);
+    if($query){
+        echo "query is ok";
+    }else{
+        echo "query is not ok";
+    }
+
+}
+    
